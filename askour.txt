@@ -1,0 +1,4 @@
+Your approach in the while loop looks good,
+ but to properly handle the end of the file (EOF) and terminate the 
+loop when no more lines are available, you need to account for two key cas
+adsfadsfdfdasf
