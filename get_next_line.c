@@ -2,127 +2,95 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stdio.h>
+#include <limits.h>
 
-// char *get_next_line(int fd)
-// {
-//     static char *remainder = NULL;
-//     char buffer[BUFFER_SIZE + 1];
-//     int bytes_read;
-//     char *line = NULL;
-//         if (fd < 0)
-//          return NULL;
-//     while ((bytes_read = read(fd, buffer, BUFFER_SIZE)) > 0 || remainder != NULL )
-//     {
 
-//         printf("-----------------------------------\n");
-//         printf("bytes_read : %d\n", bytes_read);
-//         buffer[bytes_read] = '\0';
-//         printf("Buffer: [%s]\n", buffer); 
-
-//         printf("-----------------------------------\n");
-
-//         char *tmp = cancatenate_str(remainder, buffer);
-//         printf("Concatenated: [%s]\n", tmp);
-
-//         printf("-----------------------------------\n");
-
-//         free(remainder);
-//         remainder = tmp;
-//         printf("reaminder = tmp : [%s]\n", remainder);
-
-//         printf("-----------------------------------\n");
-
-//         int new_line_index = find_new_line(remainder);
-//         printf("Newline index: %d\n", new_line_index); 
-
-//         printf("-----------------------------------\n");
-       
-//         while (find_new_line(remainder) != -1) 
-//         {
-//             int new_line_index = find_new_line(remainder);
-//             line = strndup(remainder, new_line_index );
-//             printf("Line to return: ==========>  [%s] <===========n", line); 
-
-//             printf("-----------------------------------\n");
-
-//             char *new_remainder = strdup(remainder + new_line_index + 1);
-//             printf("New remainder: [%s]\n", new_remainder); 
-
-//             printf("-----------------------------------\n");
-
-//             free(remainder);
-//             remainder = new_remainder;
-//             printf("original remainder %s\n", remainder);
-//         } 
-//          return line;
-//     }
-
-//     if (bytes_read == 0 && remainder)
-//     {
-//         line = strdup(remainder);
-//         printf("-----------------------------------\n");
-//         printf("Final line at EOF: [%s]\n", line); 
-//         printf("-----------------------------------\n");
-//         free(remainder);
-//         remainder = NULL;
-//         return line;
-//     }
-
-//     return NULL;
-// }
-
-// //=====================================================================================
-
-char *get_next_line_test(int fd)
+char *clean_and_exit (char **remainder, char **line , char** buffer)
 {
-    static char *remainder = NULL;
-    char *new_remainder = NULL;
-    char buffer[BUFFER_SIZE + 1];
-    int bytes_read;
-    char *line = NULL;
-        if (fd < 0)
-         return NULL;
-    while ((bytes_read = read(fd, buffer, BUFFER_SIZE)) > 0 || remainder != NULL)
+    if(remainder && *remainder)
     {
-        buffer[bytes_read] = '\0';
-        remainder = cancatenate_str(remainder, buffer);
-        if (find_new_line(remainder) != -1 ) 
-        {
-            int new_line_index = find_new_line(remainder);
-            line = strndup(remainder, new_line_index + 1);
-            new_remainder = strdup(remainder + new_line_index + 1);
-            free(remainder);
-            remainder = new_remainder;
-           return line;
-        }
-       if (bytes_read == 0 && remainder != NULL && *remainder != '\0')
-        {
-        line = strdup(remainder);
-        free(remainder);
-        remainder = NULL;
-        return line;
-        } 
+        free(*remainder);
+        *remainder = NULL;
     }
-
-    
+    if(buffer && *buffer)
+    {
+        free(*buffer);
+        *buffer = NULL;
+    }
+      if(line && *line)
+    {
+        free(*line);
+        *line = NULL;
+    }
     return NULL;
 }
 
+char *get_next_line(int fd) {
+    static char *remainder = NULL;
+    char *buffer;
+    int bytes_read = 1 ;
+    char *line = NULL;
+    if (fd < 0 || BUFFER_SIZE <= 0 || fd >= OPEN_MAX ||  read(fd, 0, 0) < 0)
+        return clean_and_exit(&remainder, &line, &buffer);
 
-
-int main ()
-{
-	int fd = open("askour.txt", O_RDWR | O_CREAT, 0777);
-	printf("%d\n", fd);
-    char *str = get_next_line_test(fd);
-    printf("%s\n", str);
-    printf("-----askour------\n");
-    char *st = get_next_line_test(fd);
-    printf("%s\n", st);
-     char *s = get_next_line_test(fd);
-    printf("%s\n", s);
-     char *t = get_next_line_test(fd);
-    printf("%s\n", t);
-  close(fd);
-	return 0;
+    while (bytes_read) {
+        buffer = (char *)malloc((BUFFER_SIZE + 1) * sizeof(char));
+        bytes_read = read(fd, buffer, BUFFER_SIZE);
+        if(bytes_read < 0)
+            return clean_and_exit(&remainder, &line,  &buffer);
+        buffer[bytes_read] = '\0';
+        char *temp = remainder;
+        remainder = concatenate_str(remainder, buffer); 
+        free(temp);
+        if (!remainder)
+            return clean_and_exit(&remainder, &line,  &buffer);
+        int new_line_index = find_new_line(remainder);
+        if (new_line_index != -1) {
+            line = ft_strndup(remainder, new_line_index + 1);
+            if (!line) 
+               return clean_and_exit(&remainder, &line,  &buffer);
+            char *new_remainder = ft_strdup(remainder + new_line_index + 1);
+            free(remainder);
+            remainder = new_remainder;
+            return line;
+        }
+         if (bytes_read == 0)
+        {
+                        if (remainder && *remainder)
+            {
+                line = ft_strdup(remainder);
+                free(remainder);
+                remainder = NULL;
+                return line;
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+      
+    return clean_and_exit(&remainder, &line, &buffer);;
 }
+
+
+//&& remainder != NULL && *remainder != '\0'
+// void f()
+// {
+//     system("leaks a.out");
+// }
+
+// int main ()
+// {
+//     int fd = open("test.txt", O_RDONLY | O_CREAT , 0777);
+//     char *line;
+//     while((line = get_next_line(fd)) != NULL)
+//        {
+//             printf("%s", line);
+//             free(line);
+//        }
+
+//        atexit(f);
+
+//     close(fd);
+// }
