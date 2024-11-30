@@ -2,6 +2,11 @@
 #include <fcntl.h>
 #include <stdio.h>
 
+
+void f ()
+{
+    system("leaks ask");
+}
 void test_with_file(const char *filename)
 {
     int fd = open(filename, O_RDONLY);
@@ -13,11 +18,17 @@ void test_with_file(const char *filename)
 
     char *line;
     printf("Reading from file: %s\n", filename);
-    while ((line = get_next_line(fd)) != NULL)
+    while((line = get_next_line(fd)) != NULL)
     {
-        printf("%s", line); 
-        free(line);
+          printf("%s", line);
+    free(line);
     }
+  
+    // while ((line = get_next_line(fd)) != NULL)
+    // {
+    //     printf("%s", line); 
+    //     free(line);
+    // }
     close(fd);
 }
 
@@ -27,15 +38,19 @@ void test_with_stdin()
     printf("Reading from standard input (type lines and press Enter, Ctrl+D to stop):\n");
     while ((line = get_next_line(0)) != NULL)
     {
-        printf("Read from stdin: %s", line); 
+        printf("Read from stdin: %s\n", line); 
         free(line);
+        line = NULL;
     }
 }
 
 int main(int argc, char *argv[])
 {
     if (argc == 2)
-        test_with_file(argv[1]);
+       {
+        atexit(f);
+         test_with_file(argv[1]);
+       }
     else
         test_with_stdin();
     return 0;
