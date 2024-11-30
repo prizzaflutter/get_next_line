@@ -1,16 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   get_next_line.c                                    :+:      :+:    :+:   */
+/*   get_next_line_bonus.c                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: iaskour <iaskour@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/30 16:03:56 by iaskour           #+#    #+#             */
-/*   Updated: 2024/11/30 18:24:22 by iaskour          ###   ########.fr       */
+/*   Updated: 2024/11/30 18:44:23 by iaskour          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "get_next_line.h"
+#include "get_next_line_bonus.h"
 
 static int	find_new_line(char *str)
 {
@@ -77,27 +77,27 @@ static char	*get_line(int fd, char *remainder, char *buffer)
 
 char	*get_next_line(int fd)
 {
-	static char	*remainder;
+	static char	*remainder[MAX_FILE_DESC];
 	char		*line;
 	char		*buffer;
 
 	buffer = NULL;
-	if (fd < 0 || BUFFER_SIZE <= 0 || read(fd, 0, 0) < 0)
+	if (fd < 0 || BUFFER_SIZE <= 0 || fd > MAX_FILE_DESC || read(fd, 0, 0) < 0)
 	{
-		free(remainder);
+		free(remainder[fd]);
 		free(buffer);
-		remainder = NULL;
+		remainder[fd] = NULL;
 		buffer = NULL;
 		return (NULL);
 	}
 	buffer = (char *)malloc((BUFFER_SIZE + 1) * sizeof(char));
 	if (!buffer)
 		return (NULL);
-	line = get_line(fd, remainder, buffer);
+	line = get_line(fd, remainder[fd], buffer);
 	free(buffer);
 	buffer = NULL;
 	if (!line)
 		return (NULL);
-	remainder = configure_line(line);
+	remainder[fd] = configure_line(line);
 	return (line);
 }
